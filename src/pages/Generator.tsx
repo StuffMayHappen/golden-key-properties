@@ -61,19 +61,32 @@ export default function Generator() {
     }
 
     setIsGenerating(true);
-    setTimeout(() => {
-      setResults({
-        description: `Descubra o encanto deste magnífico ${typology} em ${location}. Com uma localização privilegiada e acabamentos de excelência, esta propriedade é o cenário perfeito para quem procura conforto e sofisticação. ${highlights ? highlights + ". " : ""}Cada detalhe foi pensado para proporcionar uma experiência de vida única, onde a luz natural e os espaços amplos se conjugam harmoniosamente. Uma oportunidade imperdível por ${price}.`,
-        captions: [
-          `✨ ${typology} em ${location} — Onde o luxo encontra o conforto. ${price} 🏡\n\n#imobiliário #${location.toLowerCase().replace(/\s/g, "")} #luxo #realestate #casasdeluxo #portugal`,
-          `🔑 Novo no mercado! ${typology} deslumbrante em ${location}. Vista de sonho, acabamentos premium. ${price}\n\n#investimento #imóveis #${typology.toLowerCase()} #sonho`,
-          `🏠 Imagine chegar a casa e ter isto. ${typology} em ${location} por ${price}. O seu próximo capítulo começa aqui.\n\n#homedecor #lifestyle #realestate #propriedade #portugal`,
-        ],
-        script: `[0-5s] Abertura: Plano aéreo suave da fachada ao pôr do sol. Texto: "${typology} · ${location}"\n\n[5-15s] Interior: Sequência — sala com luz natural, cozinha equipada, vista da varanda. Voz off: "Um espaço onde cada detalhe foi pensado para si."\n\n[15-25s] Lifestyle: Café na varanda, família na sala, vista noturna. Texto: "${highlights || 'Acabamentos premium'}"\n\n[25-30s] CTA: Logo + contacto. Texto: "Agende a sua visita. ${price}"`,
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-property-content", {
+        body: { typology, location, price, highlights },
       });
+
+      if (error) throw error;
+
+      if (data?.error) {
+        toast.error(data.error);
+        setIsGenerating(false);
+        return;
+      }
+
+      setResults({
+        description: data.description,
+        captions: data.captions,
+        script: data.script,
+      });
+      toast.success("Conteúdo gerado com IA!");
+    } catch (error: any) {
+      console.error("AI generation error:", error);
+      toast.error(error.message || "Erro ao gerar conteúdo com IA.");
+    } finally {
       setIsGenerating(false);
-      toast.success("Conteúdo gerado com sucesso!");
-    }, 2500);
+    }
   };
 
   const handleSave = async () => {
