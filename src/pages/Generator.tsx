@@ -50,7 +50,7 @@ export default function Generator() {
     setPhotoPreviews(photoPreviews.filter((_, i) => i !== index));
   };
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (photos.length < 3) {
       toast.error("Adicione pelo menos 3 fotos.");
       return;
