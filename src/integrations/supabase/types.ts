@@ -14,7 +14,90 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          agency: string | null
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agency?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agency?: string | null
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          captions: string[] | null
+          created_at: string
+          description: string | null
+          highlights: string | null
+          id: string
+          location: string
+          photos: string[] | null
+          price: string
+          status: string
+          title: string
+          typology: string
+          updated_at: string
+          user_id: string
+          video_script: string | null
+        }
+        Insert: {
+          captions?: string[] | null
+          created_at?: string
+          description?: string | null
+          highlights?: string | null
+          id?: string
+          location: string
+          photos?: string[] | null
+          price: string
+          status?: string
+          title: string
+          typology: string
+          updated_at?: string
+          user_id: string
+          video_script?: string | null
+        }
+        Update: {
+          captions?: string[] | null
+          created_at?: string
+          description?: string | null
+          highlights?: string | null
+          id?: string
+          location?: string
+          photos?: string[] | null
+          price?: string
+          status?: string
+          title?: string
+          typology?: string
+          updated_at?: string
+          user_id?: string
+          video_script?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
