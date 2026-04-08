@@ -6,12 +6,22 @@ export const STRIPE_TIERS = {
   basico: {
     price_id: "price_1TJvYqDERUtlqqYGoIH4W5ok",
     product_id: "prod_UIWcWSleCwYYyE",
+    limits: { adsPerMonth: 10, captionsPerAd: 3 },
   },
   premium: {
     price_id: "price_1TJvYwDERUtlqqYGDS0pp3Nr",
     product_id: "prod_UIWcBkUFPZMFt0",
+    limits: { adsPerMonth: Infinity, captionsPerAd: 5 },
   },
 } as const;
+
+export type TierKey = keyof typeof STRIPE_TIERS;
+
+export function getTierFromProductId(productId: string | null): TierKey | null {
+  if (!productId) return null;
+  const entry = Object.entries(STRIPE_TIERS).find(([, t]) => t.product_id === productId);
+  return (entry?.[0] as TierKey) ?? null;
+}
 
 interface SubscriptionInfo {
   subscribed: boolean;

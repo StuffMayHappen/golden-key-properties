@@ -2,15 +2,18 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Plus, Eye, Copy, Trash2, MapPin, Home, Tag, Loader2 } from "lucide-react";
+import { Plus, Copy, Trash2, MapPin, Home, Tag, Loader2, Crown } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { useAuth, STRIPE_TIERS, getTierFromProductId } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, subscription } = useAuth();
   const queryClient = useQueryClient();
+
+  const currentTier = getTierFromProductId(subscription.product_id);
+  const tierLimits = currentTier ? STRIPE_TIERS[currentTier].limits : null;
 
   const { data: properties, isLoading } = useQuery({
     queryKey: ["properties"],
@@ -23,6 +26,14 @@ export default function Dashboard() {
       return data;
     },
   });
+
+  // Count ads this month
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+  const monthlyCount = properties?.filter(
+    (p) => new Date(p.created_at) >= startOfMonth
+  ).length ?? 0;
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
@@ -61,6 +72,44 @@ export default function Dashboard() {
                 <Plus className="w-4 h-4" /> Novo Anúncio
               </Button>
             </Link>
+          </div>
+
+          {/* Subscription & usage banner */}
+          <div className="rounded-2xl border border-border bg-muted/30 p-4 mb-8">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Crown className="w-5 h-5 text-gold" />
+                <div>
+                  <p className="text-sm font-body font-semibold text-foreground">
+                    {subscription.subscribed
+                      ? `Plano ${currentTier === "premium" ? "Premium" : "Básico"}`
+                      : "Sem subscrição ativa"}
+                  </p>
+                  {subscription.subscribed && tierLimits && (
+                    <p className="text-xs text-muted-foreground font-body">
+                      {tierLimits.adsPerMonth === Infinity
+                        ? `${monthlyCount} anúncios este mês · Ilimitado`
+                        : `${monthlyCount}/${tierLimits.adsPerMonth} anúncios este mês`}
+                    </p>
+                  )}
+                </div>
+              </div>
+              {(!subscription.subscribed || currentTier === "basico") && (
+                <Link to="/pricing">
+                  <Button variant="gold" size="sm">
+                    {subscription.subscribed ? "Fazer Upgrade" : "Ver Planos"}
+                  </Button>
+                </Link>
+              )}
+            </div>
+            {subscription.subscribed && tierLimits && tierLimits.adsPerMonth !== Infinity && (
+              <div className="mt-3 h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className="h-full rounded-full gold-gradient transition-all duration-500"
+                  style={{ width: `${Math.min((monthlyCount / tierLimits.adsPerMonth) * 100, 100)}%` }}
+                />
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">

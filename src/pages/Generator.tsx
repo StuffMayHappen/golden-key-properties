@@ -6,14 +6,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useState } from "react";
-import { Sparkles, Upload, X, FileText, Instagram, Video, Loader2, Copy, Check, Save } from "lucide-react";
+import { Sparkles, Upload, X, FileText, Instagram, Video, Loader2, Copy, Check, Save, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useAuth, STRIPE_TIERS, getTierFromProductId } from "@/contexts/AuthContext";
+import { useNavigate, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Generator() {
-  const { user } = useAuth();
+  const { user, subscription } = useAuth();
   const navigate = useNavigate();
   const [photos, setPhotos] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
@@ -30,6 +31,32 @@ export default function Generator() {
     script: string;
   }>(null);
   const [copied, setCopied] = useState<string | null>(null);
+
+  const currentTier = getTierFromProductId(subscription.product_id);
+  const tierLimits = currentTier ? STRIPE_TIERS[currentTier].limits : null;
+
+  // Count ads created this month
+  const { data: monthlyCount = 0 } = useQuery({
+    queryKey: ["monthly-ad-count", user?.id],
+    queryFn: async () => {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      const { count, error } = await supabase
+        .from("properties")
+        .select("*", { count: "exact", head: true })
+        .gte("created_at", startOfMonth.toISOString());
+      if (error) throw error;
+      return count ?? 0;
+    },
+    enabled: !!user,
+  });
+
+  const isAtLimit = !subscription.subscribed
+    ? true
+    : tierLimits
+      ? monthlyCount >= tierLimits.adsPerMonth
+      : false;
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -51,6 +78,14 @@ export default function Generator() {
   };
 
   const handleGenerate = async () => {
+    if (!subscription.subscribed) {
+      toast.error("Precisa de uma subscrição ativa para gerar anúncios.");
+      return;
+    }
+    if (isAtLimit) {
+      toast.error(`Atingiu o limite de ${tierLimits?.adsPerMonth} anúncios este mês. Faça upgrade para o plano Premium.`);
+      return;
+    }
     if (photos.length < 3) {
       toast.error("Adicione pelo menos 3 fotos.");
       return;
@@ -94,7 +129,6 @@ export default function Generator() {
     setIsSaving(true);
 
     try {
-      // Upload photos
       const photoUrls: string[] = [];
       for (const file of photos) {
         const filePath = `${user.id}/${Date.now()}-${file.name}`;
@@ -153,8 +187,42 @@ export default function Generator() {
             </p>
           </div>
 
+          {/* Subscription status banner */}
+          {!subscription.subscribed ? (
+            <div className="rounded-2xl border border-gold/30 bg-gold/5 p-5 mb-8 flex flex-col sm:flex-row items-center gap-4">
+              <AlertTriangle className="w-6 h-6 text-gold shrink-0" />
+              <div className="flex-1 text-center sm:text-left">
+                <p className="font-display font-semibold text-foreground">Subscrição necessária</p>
+                <p className="text-sm text-muted-foreground font-body">Precisa de um plano ativo para gerar anúncios com IA.</p>
+              </div>
+              <Link to="/pricing">
+                <Button variant="gold" size="sm">Ver Planos</Button>
+              </Link>
+            </div>
+          ) : tierLimits && tierLimits.adsPerMonth !== Infinity && (
+            <div className="rounded-2xl border border-border bg-muted/30 p-4 mb-8">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-body text-muted-foreground">
+                  Anúncios este mês: <strong className="text-foreground">{monthlyCount}/{tierLimits.adsPerMonth}</strong>
+                </p>
+                {isAtLimit && (
+                  <Link to="/pricing">
+                    <Button variant="gold" size="sm">Fazer Upgrade</Button>
+                  </Link>
+                )}
+              </div>
+              {tierLimits.adsPerMonth > 0 && (
+                <div className="mt-2 h-2 rounded-full bg-muted overflow-hidden">
+                  <div
+                    className="h-full rounded-full gold-gradient transition-all duration-500"
+                    style={{ width: `${Math.min((monthlyCount / tierLimits.adsPerMonth) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="glass-card rounded-2xl p-6 md:p-8 mb-8">
-            {/* Title */}
             <div className="mb-4">
               <Label className="font-body mb-1.5 block">Título do Imóvel *</Label>
               <Input
@@ -164,7 +232,6 @@ export default function Generator() {
               />
             </div>
 
-            {/* Photos */}
             <div className="mb-6">
               <Label className="text-base font-display font-semibold mb-3 block">
                 Fotografias (3-5)
@@ -224,7 +291,13 @@ export default function Generator() {
               />
             </div>
 
-            <Button variant="gold" size="lg" className="w-full gap-2" onClick={handleGenerate} disabled={isGenerating}>
+            <Button
+              variant="gold"
+              size="lg"
+              className="w-full gap-2"
+              onClick={handleGenerate}
+              disabled={isGenerating || !subscription.subscribed || isAtLimit}
+            >
               {isGenerating ? (
                 <><Loader2 className="w-5 h-5 animate-spin" /> A gerar conteúdo...</>
               ) : (
