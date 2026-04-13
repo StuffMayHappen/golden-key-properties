@@ -10,6 +10,7 @@ import Generator from "./pages/Generator";
 import Pricing from "./pages/Pricing";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import CheckoutSuccess from "./pages/CheckoutSuccess";
 
 const queryClient = new QueryClient();
 
@@ -27,6 +28,7 @@ const AppRoutes = () => (
     <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
     <Route path="/generator" element={<ProtectedRoute><Generator /></ProtectedRoute>} />
     <Route path="/pricing" element={<Pricing />} />
+    <Route path="/checkout/success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
