@@ -60,8 +60,8 @@ export default function Auth() {
             </h1>
             <p className="text-muted-foreground font-body mt-2">
               {isLogin
-                ? "Entre na sua conta ImmoElite"
-                : "Junte-se à plataforma ImmoElite"}
+                ? "Entre na sua conta Real Easy State"
+                : "Junte-se à plataforma Real Easy State"}
             </p>
           </div>
 
