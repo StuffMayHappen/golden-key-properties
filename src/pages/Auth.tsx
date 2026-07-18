@@ -8,8 +8,10 @@ import { Footer } from "@/components/Footer";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Home, Loader2, Mail, Lock, User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function Auth() {
+  const { t } = useTranslation();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +27,7 @@ export default function Auth() {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        toast.success("Sessão iniciada com sucesso!");
+        toast.success(t("auth.loginSuccess"));
         navigate("/dashboard");
       } else {
         const { error } = await supabase.auth.signUp({
@@ -37,10 +39,10 @@ export default function Auth() {
           },
         });
         if (error) throw error;
-        toast.success("Conta criada! Verifique o seu email para confirmar.");
+        toast.success(t("auth.signupSuccess"));
       }
     } catch (error: any) {
-      toast.error(error.message || "Ocorreu um erro.");
+      toast.error(error.message || t("auth.error"));
     } finally {
       setLoading(false);
     }
@@ -56,12 +58,10 @@ export default function Auth() {
               <Home className="w-7 h-7 text-accent-foreground" />
             </div>
             <h1 className="text-3xl font-bold font-display text-foreground">
-              {isLogin ? "Bem-vindo de volta" : "Criar conta"}
+              {isLogin ? t("auth.welcomeBack") : t("auth.createAccount")}
             </h1>
             <p className="text-muted-foreground font-body mt-2">
-              {isLogin
-                ? "Entre na sua conta Real Easy State"
-                : "Junte-se à plataforma Real Easy State"}
+              {isLogin ? t("auth.subLogin") : t("auth.subSignup")}
             </p>
           </div>
 
@@ -69,11 +69,11 @@ export default function Auth() {
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && (
                 <div>
-                  <Label className="font-body mb-1.5 block">Nome completo</Label>
+                  <Label className="font-body mb-1.5 block">{t("auth.fullName")}</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      placeholder="O seu nome"
+                      placeholder={t("auth.fullNamePh")}
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       className="pl-10"
@@ -83,12 +83,12 @@ export default function Auth() {
                 </div>
               )}
               <div>
-                <Label className="font-body mb-1.5 block">Email</Label>
+                <Label className="font-body mb-1.5 block">{t("auth.email")}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="email"
-                    placeholder="nome@email.com"
+                    placeholder={t("auth.emailPh")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="pl-10"
@@ -97,12 +97,12 @@ export default function Auth() {
                 </div>
               </div>
               <div>
-                <Label className="font-body mb-1.5 block">Palavra-passe</Label>
+                <Label className="font-body mb-1.5 block">{t("auth.password")}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="password"
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t("auth.passwordPh")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10"
@@ -122,9 +122,9 @@ export default function Auth() {
                 {loading ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : isLogin ? (
-                  "Entrar"
+                  t("auth.signIn")
                 ) : (
-                  "Criar Conta"
+                  t("auth.createAccountBtn")
                 )}
               </Button>
             </form>
@@ -134,9 +134,7 @@ export default function Auth() {
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-sm font-body text-muted-foreground hover:text-gold transition-colors"
               >
-                {isLogin
-                  ? "Não tem conta? Registe-se aqui"
-                  : "Já tem conta? Faça login"}
+                {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}
               </button>
             </div>
           </div>
