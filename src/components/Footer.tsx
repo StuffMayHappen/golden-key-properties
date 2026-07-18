@@ -1,6 +1,8 @@
 import { Home } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function Footer() {
+  const { t } = useTranslation();
   return (
     <footer className="navy-gradient text-primary-foreground py-12 mt-auto">
       <div className="container mx-auto px-4">
@@ -10,11 +12,11 @@ export function Footer() {
               <Home className="w-4 h-4 text-accent-foreground" />
             </div>
             <span className="font-display text-xl font-bold">
-              Immo<span className="text-gold">Elite</span>
+              Real <span className="text-gold">Easy State</span>
             </span>
           </div>
           <p className="text-sm text-gold-light/70">
-            © 2026 ImmoElite. Todos os direitos reservados.
+            © 2026 Real Easy State. {t("footer.rights")}
           </p>
         </div>
       </div>
