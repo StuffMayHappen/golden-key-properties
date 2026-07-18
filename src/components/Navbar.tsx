@@ -3,18 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Home, LayoutDashboard, Sparkles, CreditCard, Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-
-const navItems = [
-  { label: "Início", path: "/", icon: Home },
-  { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
-  { label: "Gerador", path: "/generator", icon: Sparkles },
-  { label: "Preços", path: "/pricing", icon: CreditCard },
-];
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { t } = useTranslation();
+
+  const navItems = [
+    { label: t("nav.home"), path: "/", icon: Home },
+    { label: t("nav.dashboard"), path: "/dashboard", icon: LayoutDashboard },
+    { label: t("nav.generator"), path: "/generator", icon: Sparkles },
+    { label: t("nav.pricing"), path: "/pricing", icon: CreditCard },
+  ];
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/90 backdrop-blur-md border-b border-border/50">
@@ -24,7 +28,7 @@ export function Navbar() {
             <Home className="w-4 h-4 text-accent-foreground" />
           </div>
           <span className="font-display text-xl font-bold text-foreground">
-            Immo<span className="text-gold">Elite</span>
+            Real <span className="text-gold">Easy State</span>
           </span>
         </Link>
 
@@ -44,6 +48,8 @@ export function Navbar() {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle />
+          <LanguageSwitcher />
           {user ? (
             <>
               <span className="text-sm text-muted-foreground font-body truncate max-w-[150px]">
@@ -51,27 +57,32 @@ export function Navbar() {
               </span>
               <Button variant="ghost" size="sm" onClick={signOut} className="gap-1">
                 <LogOut className="w-4 h-4" />
-                Sair
+                {t("nav.signOut")}
               </Button>
             </>
           ) : (
             <>
               <Link to="/auth">
-                <Button variant="outline" size="sm">Entrar</Button>
+                <Button variant="outline" size="sm">{t("nav.signIn")}</Button>
               </Link>
               <Link to="/auth">
-                <Button variant="gold" size="sm">Começar Grátis</Button>
+                <Button variant="gold" size="sm">{t("nav.start")}</Button>
               </Link>
             </>
           )}
         </div>
 
-        <button
-          className="md:hidden p-2 text-foreground"
-          onClick={() => setMobileOpen(!mobileOpen)}
-        >
-          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="md:hidden flex items-center gap-1">
+          <ThemeToggle />
+          <LanguageSwitcher />
+          <button
+            className="p-2 text-foreground"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Menu"
+          >
+            {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       {mobileOpen && (
@@ -91,15 +102,15 @@ export function Navbar() {
             <div className="flex gap-2 mt-2">
               {user ? (
                 <Button variant="outline" className="flex-1 gap-1" onClick={signOut}>
-                  <LogOut className="w-4 h-4" /> Sair
+                  <LogOut className="w-4 h-4" /> {t("nav.signOut")}
                 </Button>
               ) : (
                 <>
                   <Link to="/auth" className="flex-1" onClick={() => setMobileOpen(false)}>
-                    <Button variant="outline" className="w-full">Entrar</Button>
+                    <Button variant="outline" className="w-full">{t("nav.signIn")}</Button>
                   </Link>
                   <Link to="/auth" className="flex-1" onClick={() => setMobileOpen(false)}>
-                    <Button variant="gold" className="w-full">Começar</Button>
+                    <Button variant="gold" className="w-full">{t("nav.start")}</Button>
                   </Link>
                 </>
               )}
