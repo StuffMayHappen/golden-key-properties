@@ -7,10 +7,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, STRIPE_TIERS, getTierFromProductId } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
   const { user, subscription } = useAuth();
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   const currentTier = getTierFromProductId(subscription.product_id);
   const tierLimits = currentTier ? STRIPE_TIERS[currentTier].limits : null;
@@ -27,7 +29,6 @@ export default function Dashboard() {
     },
   });
 
-  // Count ads this month
   const startOfMonth = new Date();
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
@@ -42,18 +43,20 @@ export default function Dashboard() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
-      toast.success("Imóvel eliminado.");
+      toast.success(t("dashboard.deleted"));
     },
   });
 
   const copyContent = (property: any) => {
     const text = `${property.title}\n${property.typology} · ${property.location}\n${property.price}\n\n${property.description || ""}`;
     navigator.clipboard.writeText(text);
-    toast.success("Copiado!");
+    toast.success(t("dashboard.copied"));
   };
 
   const published = properties?.filter((p) => p.status === "published").length ?? 0;
   const drafts = properties?.filter((p) => p.status === "draft").length ?? 0;
+
+  const tierLabel = currentTier === "premium" ? t("pricing.premiumName") : t("pricing.basicName");
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -62,19 +65,18 @@ export default function Dashboard() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground">Meus Imóveis</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground">{t("dashboard.title")}</h1>
               <p className="text-muted-foreground font-body mt-1">
-                Olá, {user?.user_metadata?.full_name || user?.email}
+                {t("dashboard.hello")}, {user?.user_metadata?.full_name || user?.email}
               </p>
             </div>
             <Link to="/generator">
               <Button variant="gold" className="gap-2">
-                <Plus className="w-4 h-4" /> Novo Anúncio
+                <Plus className="w-4 h-4" /> {t("dashboard.newAd")}
               </Button>
             </Link>
           </div>
 
-          {/* Subscription & usage banner */}
           <div className="rounded-2xl border border-border bg-muted/30 p-4 mb-8">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
@@ -82,14 +84,14 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm font-body font-semibold text-foreground">
                     {subscription.subscribed
-                      ? `Plano ${currentTier === "premium" ? "Premium" : "Básico"}`
-                      : "Sem subscrição ativa"}
+                      ? `${t("dashboard.planPrefix")} ${tierLabel}`
+                      : t("dashboard.noSubscription")}
                   </p>
                   {subscription.subscribed && tierLimits && (
                     <p className="text-xs text-muted-foreground font-body">
                       {tierLimits.adsPerMonth === Infinity
-                        ? `${monthlyCount} anúncios este mês · Ilimitado`
-                        : `${monthlyCount}/${tierLimits.adsPerMonth} anúncios este mês`}
+                        ? t("dashboard.adsThisMonthUnlimited", { count: monthlyCount })
+                        : t("dashboard.adsThisMonth", { count: monthlyCount, max: tierLimits.adsPerMonth })}
                     </p>
                   )}
                 </div>
@@ -97,7 +99,7 @@ export default function Dashboard() {
               {(!subscription.subscribed || currentTier === "basico") && (
                 <Link to="/pricing">
                   <Button variant="gold" size="sm">
-                    {subscription.subscribed ? "Fazer Upgrade" : "Ver Planos"}
+                    {subscription.subscribed ? t("dashboard.upgrade") : t("dashboard.viewPlans")}
                   </Button>
                 </Link>
               )}
@@ -114,9 +116,9 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[
-              { label: "Total Imóveis", value: properties?.length ?? 0 },
-              { label: "Publicados", value: published },
-              { label: "Rascunhos", value: drafts },
+              { label: t("dashboard.totalProperties"), value: properties?.length ?? 0 },
+              { label: t("dashboard.published"), value: published },
+              { label: t("dashboard.drafts"), value: drafts },
             ].map((s) => (
               <div key={s.label} className="glass-card rounded-xl p-5">
                 <p className="text-sm text-muted-foreground font-body">{s.label}</p>
@@ -132,11 +134,11 @@ export default function Dashboard() {
           ) : properties?.length === 0 ? (
             <div className="text-center py-20 glass-card rounded-2xl">
               <Home className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-xl font-display font-semibold text-foreground mb-2">Sem imóveis ainda</h3>
-              <p className="text-muted-foreground font-body mb-6">Crie o seu primeiro anúncio com IA.</p>
+              <h3 className="text-xl font-display font-semibold text-foreground mb-2">{t("dashboard.noProperties")}</h3>
+              <p className="text-muted-foreground font-body mb-6">{t("dashboard.noPropertiesDesc")}</p>
               <Link to="/generator">
                 <Button variant="gold" className="gap-2">
-                  <Plus className="w-4 h-4" /> Criar Primeiro Anúncio
+                  <Plus className="w-4 h-4" /> {t("dashboard.createFirst")}
                 </Button>
               </Link>
             </div>
@@ -167,7 +169,7 @@ export default function Dashboard() {
                           : "bg-muted text-muted-foreground"
                       }`}
                     >
-                      {property.status === "published" ? "Publicado" : "Rascunho"}
+                      {property.status === "published" ? t("dashboard.publishedBadge") : t("dashboard.draftBadge")}
                     </span>
                   </div>
                   <div className="p-5">
@@ -187,7 +189,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border">
                       <Button variant="ghost" size="sm" className="gap-1 flex-1" onClick={() => copyContent(property)}>
-                        <Copy className="w-3.5 h-3.5" /> Copiar
+                        <Copy className="w-3.5 h-3.5" /> {t("dashboard.copy")}
                       </Button>
                       <Button
                         variant="ghost"
